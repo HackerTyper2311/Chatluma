@@ -2,26 +2,26 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<title>Chatluma Leeftijdscheck</title>
+<title>Chatluma Leeftijdscheck Demo</title>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
-  body { font-family: Arial, sans-serif; text-align: center; padding: 40px; background-color: #f0f8ff; }
+  body { font-family: Arial; text-align: center; padding: 40px; background: #f0f8ff; }
   video { border: 2px solid #333; border-radius: 8px; }
-  #ageOutput { font-size: 24px; margin-top: 20px; }
+  #ageOutput { font-size: 24px; margin-top: 20px; color: #333; }
   #instructions { margin-top: 15px; font-size: 16px; color: #555; }
 </style>
 </head>
 <body>
-<h1>Chatluma Leeftijdscheck</h1>
+<h1>Chatluma Leeftijdscheck Demo</h1>
 <video id="video" width="320" height="240" autoplay muted></video>
 <div id="ageOutput">Plaats je gezicht in beeld…</div>
-<div id="instructions">Zorg dat je gezicht goed zichtbaar is en goed verlicht.</div>
+<div id="instructions">Zorg dat je gezicht goed zichtbaar en verlicht is.</div>
 
 <script>
-async function start() {
+async function startDemo() {
   const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
 
-  // Laad modellen
+  // Laad de modellen
   await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
   await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
 
@@ -29,18 +29,21 @@ async function start() {
   const ageOutput = document.getElementById('ageOutput');
 
   // Start camera
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => { video.srcObject = stream; })
-    .catch(err => { ageOutput.innerText = "Camera toegang nodig!"; });
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+  } catch (err) {
+    ageOutput.innerText = "Camera toegang nodig!";
+    return;
+  }
 
-  // Detectie elke seconde
   video.addEventListener('play', () => {
-    setInterval(async () => {
-      const result = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withAgeAndGender();
-      if (result) {
-        const age = Math.round(result.age);
+    const interval = setInterval(async () => {
+      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withAgeAndGender();
+      if (detection) {
+        const age = Math.round(detection.age);
         ageOutput.innerText = `Geschatte leeftijd: ${age} jaar — ` + 
-                              (age >= 5 && age <= 16 ? "✅ Toegang" : "❌ Geen toegang");
+                              (age >= 5 && age <= 16 ? "✅ Toegang toegestaan" : "❌ Geen toegang");
       } else {
         ageOutput.innerText = "Geen gezicht gedetecteerd…";
       }
@@ -48,7 +51,8 @@ async function start() {
   });
 }
 
-start();
+// Start demo
+startDemo();
 </script>
 </body>
 </html>
