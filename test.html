@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Chatluma Age Test</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f8ff;
+      padding: 50px;
+    }
+    video {
+      border: 2px solid #333;
+      border-radius: 10px;
+    }
+    #ageOutput {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chatluma Age Verification</h1>
+  <video id="video" width="320" height="240" autoplay muted></video>
+  <div id="ageOutput">Leeftijd wordt geschat...</div>
+
+  <script>
+    async function start() {
+      // Laad modellen
+      await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights/');
+      await faceapi.nets.ageGenderNet.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/weights/');
+
+      // Start camera
+      const video = document.getElementById('video');
+      navigator.mediaDevices.getUserMedia({ video: {} })
+        .then(stream => {
+          video.srcObject = stream;
+        })
+        .catch(err => console.error("Camera niet toegankelijk: ", err));
+
+      // Detectie elke 2 seconden
+      video.addEventListener('play', () => {
+        const ageOutput = document.getElementById('ageOutput');
+        const interval = setInterval(async () => {
+          const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withAgeAndGender();
+          if (detections) {
+            const age = Math.round(detections.age);
+            ageOutput.innerText = `Geschatte leeftijd: ${age} jaar`;
+            if (age >= 5 && age <= 16) {
+              ageOutput.innerText += " ✅ Toegang toegestaan!";
+            } else {
+              ageOutput.innerText += " ❌ Toegang geweigerd!";
+            }
+          } else {
+            ageOutput.innerText = "Geen gezicht gedetecteerd...";
+          }
+        }, 2000);
+      });
+    }
+
+    start();
+  </script>
+</body>
+</html>
