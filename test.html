@@ -1,47 +1,54 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Chatluma Leeftijdscheck</title>
-  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <style>
-    body { font-family: Arial; text-align:center; padding:30px; background:#f0f8ff; }
-    video { border:2px solid #333; border-radius:8px; }
-    #ageOutput { margin-top:20px; font-size:24px; color:#333; }
-  </style>
+<meta charset="UTF-8">
+<title>Chatluma Leeftijdscheck</title>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; padding: 40px; background-color: #f0f8ff; }
+  video { border: 2px solid #333; border-radius: 8px; }
+  #ageOutput { font-size: 24px; margin-top: 20px; }
+  #instructions { margin-top: 15px; font-size: 16px; color: #555; }
+</style>
 </head>
 <body>
-  <h1>Chatluma Leeftijdscheck</h1>
-  <video id="video" width="320" height="240" autoplay muted></video>
-  <div id="ageOutput">Plaats je gezicht in beeld…</div>
+<h1>Chatluma Leeftijdscheck</h1>
+<video id="video" width="320" height="240" autoplay muted></video>
+<div id="ageOutput">Plaats je gezicht in beeld…</div>
+<div id="instructions">Zorg dat je gezicht goed zichtbaar is en goed verlicht.</div>
 
-  <script>
-    async function start() {
-      const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-      await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+<script>
+async function start() {
+  const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
 
-      const video = document.getElementById('video');
-      const ageOutput = document.getElementById('ageOutput');
+  // Laad modellen
+  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+  await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
 
-      navigator.mediaDevices.getUserMedia({ video:true })
-        .then(stream => video.srcObject = stream)
-        .catch(()=> ageOutput.innerText="Camera toegang nodig!");
+  const video = document.getElementById('video');
+  const ageOutput = document.getElementById('ageOutput');
 
-      video.addEventListener('play', () => {
-        setInterval(async () => {
-          const result = await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withAgeAndGender();
-          if(result){
-            const age = Math.round(result.age);
-            ageOutput.innerText = `Geschatte leeftijd: ${age} jaar — ` + 
-                                  (age>=5 && age<=16 ? "✅ Toegang" : "❌ Geen toegang");
-          } else {
-            ageOutput.innerText = "Geen gezicht gedetecteerd…";
-          }
-        },1000);
-      });
-    }
-    start();
-  </script>
+  // Start camera
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => { video.srcObject = stream; })
+    .catch(err => { ageOutput.innerText = "Camera toegang nodig!"; });
+
+  // Detectie elke seconde
+  video.addEventListener('play', () => {
+    setInterval(async () => {
+      const result = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withAgeAndGender();
+      if (result) {
+        const age = Math.round(result.age);
+        ageOutput.innerText = `Geschatte leeftijd: ${age} jaar — ` + 
+                              (age >= 5 && age <= 16 ? "✅ Toegang" : "❌ Geen toegang");
+      } else {
+        ageOutput.innerText = "Geen gezicht gedetecteerd…";
+      }
+    }, 1000);
+  });
+}
+
+start();
+</script>
 </body>
 </html>
